@@ -1,0 +1,46 @@
+<mat-card class="user-card">
+  <mat-card-content>
+    <div class="user-card-inner">
+      <!-- Avatar -->
+      <a [routerLink]="['/profile', user.id]" class="avatar-link">
+        @if (user.avatar) {
+          <img
+            [src]="user.avatar"
+            [alt]="user.username"
+            class="avatar avatar-md"
+          />
+        } @else {
+          <div class="avatar-placeholder avatar-md">
+            <mat-icon>person</mat-icon>
+          </div>
+        }
+      </a>
+
+      <!-- User Info -->
+      <div class="user-info">
+        <a [routerLink]="['/profile', user.id]" class="username-link">
+          {{ user.username }}
+        </a>
+        @if (user.bio) {
+          <p class="user-bio">{{ user.bio }}</p>
+        }
+        <p class="user-stats">
+          <span><strong>{{ user.followerCount }}</strong> followers</span>
+          <span><strong>{{ user.postCount }}</strong> posts</span>
+        </p>
+      </div>
+
+      <!-- Follow Button -->
+      @if (!isOwnProfile) {
+        <button
+          mat-flat-button
+          [color]="user.isFollowedByCurrentUser ? '' : 'primary'"
+          [class.following-btn]="user.isFollowedByCurrentUser"
+          (click)="onFollowToggle()"
+        >
+          {{ user.isFollowedByCurrentUser ? 'Unfollow' : 'Follow' }}
+        </button>
+      }
+    </div>
+  </mat-card-content>
+</mat-card>

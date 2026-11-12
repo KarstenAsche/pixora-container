@@ -1,0 +1,144 @@
+:host {
+  display: block;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: var(--navbar-height);
+  background: rgba(255, 255, 255, 0.92) ;
+  backdrop-filter: saturate(180%) blur(24px) ;
+  -webkit-backdrop-filter: saturate(180%) blur(24px) ;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) ;
+  box-shadow: 0 1px 20px rgba(0, 0, 0, 0.06) ;
+}
+
+.navbar-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.brand {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+  text-decoration: none;
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: opacity 200ms;
+
+  &:hover {
+    opacity: 0.8;
+    text-decoration: none;
+  }
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  margin-left: 12px;
+  gap: 12px;
+
+  a {
+    color: rgba(16, 42, 67, 0.82);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 10px;
+    transition: color 200ms, background 200ms;
+    font-size: 14px;
+    font-weight: 500;
+
+    &:hover {
+      color: rgba(16, 42, 67, 0.96);
+      background: rgba(0, 0, 0, 0.05);
+      text-decoration: none;
+    }
+
+    &.active-link {
+      color: var(--accent);
+      background: rgba(15, 95, 116, 0.12);
+      font-weight: 600;
+    }
+  }
+
+}
+
+.nav-label {
+  font-size: 14px;
+  height: 20px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.user-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(16, 42, 67, 0.86);
+  border-radius: 10px;
+  transition: background 200ms, color 200ms;
+
+  &:hover {
+    color: rgba(16, 42, 67, 1);
+  }
+
+}
+
+.nav-avatar-slot {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-fallback-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+}
+
+.nav-avatar {
+  /* Smaller than the slot: the image fills its box edge to edge, while the
+     account_circle glyph only draws a ~30px disc inside its 36px box. */
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    var(--gradient) border-box;
+}
+
+.username-label {
+  font-size: 14px;
+  font-weight: 500;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .nav-label,
+  .username-label {
+    display: none;
+  }
+}

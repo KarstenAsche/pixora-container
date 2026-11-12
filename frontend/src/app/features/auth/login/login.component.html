@@ -1,0 +1,86 @@
+<div class="auth-page">
+  <mat-card class="auth-card">
+    <!-- Logo / Brand -->
+    <div class="auth-brand">
+      <mat-icon class="brand-icon">photo_camera</mat-icon>
+      <h1 class="brand-name">{{ appName }}</h1>
+    </div>
+
+    <mat-card-content>
+      @if (serverError()) {
+        <div class="server-error-banner">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ serverError() }}</span>
+        </div>
+      }
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+        <!-- Username -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Username</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="username"
+            placeholder="your.username"
+            autocomplete="username"
+          />
+          <mat-icon matPrefix>person</mat-icon>
+          @if (loginForm.get('username')?.hasError('required') && loginForm.get('username')?.touched) {
+            <mat-error>Username is required</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Password -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Password</mat-label>
+          <input
+            matInput
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+          />
+          <mat-icon matPrefix>lock</mat-icon>
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="togglePasswordVisibility()"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+          >
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+            <mat-error>Password is required</mat-error>
+          }
+          @if (loginForm.get('password')?.hasError('minlength') && loginForm.get('password')?.touched) {
+            <mat-error>Password must be at least 6 characters</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Submit -->
+        <button
+          mat-flat-button
+          color="primary"
+          type="submit"
+          class="full-width submit-btn"
+          [disabled]="isLoading()"
+        >
+          @if (isLoading()) {
+            <mat-spinner diameter="20"></mat-spinner>
+            <span>Logging in...</span>
+          } @else {
+            Log In
+          }
+        </button>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Register link -->
+  <mat-card class="auth-card secondary-card">
+    <p>
+      Don't have an account?
+      <a routerLink="/register">Sign up</a>
+    </p>
+  </mat-card>
+</div>

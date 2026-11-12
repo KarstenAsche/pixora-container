@@ -1,0 +1,165 @@
+.post-card {
+  max-width: var(--post-card-max-width);
+  margin: 0 auto 28px;
+  border-radius: var(--radius-md) ;
+  background: var(--bg-surface) ;
+  border: 1px solid var(--glass-border) ;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04) ;
+  overflow: hidden;
+  transition: box-shadow 250ms var(--ease), transform 250ms var(--ease) ;
+
+  &:hover {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06) ;
+  }
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  position: relative;
+  gap: 12px;
+}
+
+.owner-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+  flex: 1;
+  border-radius: 8px;
+  transition: opacity 150ms;
+
+  &:hover {
+    opacity: 0.85;
+    text-decoration: none;
+
+    .owner-username { text-decoration: underline; }
+  }
+}
+
+.owner-avatar {
+  width: 36px ;
+  height: 36px ;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0;
+  border: 2px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    var(--gradient) border-box;
+  transition: transform 200ms var(--ease);
+}
+
+.owner-username {
+  font-size: 14px ;
+  font-weight: 600 ;
+  color: var(--text-primary);
+  margin: 0 ;
+}
+
+.post-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-weight: 400;
+}
+
+.delete-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  transition: color 150ms;
+
+  &:hover { color: var(--error-color); }
+}
+
+.post-image-container {
+  width: 100%;
+  background-color: #000;
+}
+
+.post-image {
+  width: 100%;
+  display: block;
+  max-height: 600px;
+  object-fit: contain;
+}
+
+.post-actions {
+  display: flex;
+  align-items: center;
+  padding: 4px 10px;
+  gap: 2px;
+
+  button {
+    color: var(--text-secondary);
+    border-radius: 10px;
+    transition: color 150ms, background 150ms, transform 150ms;
+
+    &:hover {
+      color: var(--text-primary);
+    }
+  }
+
+  .liked mat-icon {
+    color: var(--like-color);
+  }
+
+  .liked {
+    animation: like-pop 300ms var(--ease);
+  }
+}
+
+@keyframes like-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.35); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.post-content {
+  padding: 0 16px 16px ;
+}
+
+.like-count {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.caption {
+  font-size: 14px;
+  line-height: 1.55;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.caption-owner {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-right: 6px;
+  text-decoration: none;
+  transition: color 150ms;
+
+  &:hover {
+    color: var(--accent);
+    text-decoration: none;
+  }
+}
+
+.view-comments-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 2px 0;
+  font-family: inherit;
+  transition: color 150ms;
+
+  &:hover { color: var(--text-primary); }
+}

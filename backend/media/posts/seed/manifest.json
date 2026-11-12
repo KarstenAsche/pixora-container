@@ -1,0 +1,322 @@
+[
+  {
+    "account_index": 1,
+    "topic": "CONTAINERS & IMAGES",
+    "folder": "01-containers",
+    "file": "01-containers-01-poster.png",
+    "style": "poster",
+    "caption_hint": "Docker"
+  },
+  {
+    "account_index": 1,
+    "topic": "CONTAINERS & IMAGES",
+    "folder": "01-containers",
+    "file": "01-containers-02-poster.png",
+    "style": "poster",
+    "caption_hint": "Distroless"
+  },
+  {
+    "account_index": 1,
+    "topic": "CONTAINERS & IMAGES",
+    "folder": "01-containers",
+    "file": "01-containers-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "trivy image scan"
+  },
+  {
+    "account_index": 1,
+    "topic": "CONTAINERS & IMAGES",
+    "folder": "01-containers",
+    "file": "01-containers-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "Multi-Stage Build"
+  },
+  {
+    "account_index": 2,
+    "topic": "CI / CD PIPELINES",
+    "folder": "02-cicd",
+    "file": "02-cicd-01-poster.png",
+    "style": "poster",
+    "caption_hint": "GitHub Actions"
+  },
+  {
+    "account_index": 2,
+    "topic": "CI / CD PIPELINES",
+    "folder": "02-cicd",
+    "file": "02-cicd-02-poster.png",
+    "style": "poster",
+    "caption_hint": "GitLab CI"
+  },
+  {
+    "account_index": 2,
+    "topic": "CI / CD PIPELINES",
+    "folder": "02-cicd",
+    "file": "02-cicd-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "gh run watch"
+  },
+  {
+    "account_index": 2,
+    "topic": "CI / CD PIPELINES",
+    "folder": "02-cicd",
+    "file": "02-cicd-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "Shift Left"
+  },
+  {
+    "account_index": 3,
+    "topic": "INFRASTRUCTURE AS CODE",
+    "folder": "03-iac",
+    "file": "03-iac-01-poster.png",
+    "style": "poster",
+    "caption_hint": "Terraform"
+  },
+  {
+    "account_index": 3,
+    "topic": "INFRASTRUCTURE AS CODE",
+    "folder": "03-iac",
+    "file": "03-iac-02-poster.png",
+    "style": "poster",
+    "caption_hint": "Ansible"
+  },
+  {
+    "account_index": 3,
+    "topic": "INFRASTRUCTURE AS CODE",
+    "folder": "03-iac",
+    "file": "03-iac-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "checkov scan"
+  },
+  {
+    "account_index": 3,
+    "topic": "INFRASTRUCTURE AS CODE",
+    "folder": "03-iac",
+    "file": "03-iac-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "Terraform Layout"
+  },
+  {
+    "account_index": 4,
+    "topic": "GOOGLE CLOUD PLATFORM",
+    "folder": "04-gcp",
+    "file": "04-gcp-01-poster.png",
+    "style": "poster",
+    "caption_hint": "Cloud Run"
+  },
+  {
+    "account_index": 4,
+    "topic": "GOOGLE CLOUD PLATFORM",
+    "folder": "04-gcp",
+    "file": "04-gcp-02-poster.png",
+    "style": "poster",
+    "caption_hint": "Secret Manager"
+  },
+  {
+    "account_index": 4,
+    "topic": "GOOGLE CLOUD PLATFORM",
+    "folder": "04-gcp",
+    "file": "04-gcp-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "gcloud deploy"
+  },
+  {
+    "account_index": 4,
+    "topic": "GOOGLE CLOUD PLATFORM",
+    "folder": "04-gcp",
+    "file": "04-gcp-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "Django auf GCP"
+  },
+  {
+    "account_index": 5,
+    "topic": "APPLICATION SECURITY",
+    "folder": "05-appsec",
+    "file": "05-appsec-01-poster.png",
+    "style": "poster",
+    "caption_hint": "Semgrep"
+  },
+  {
+    "account_index": 5,
+    "topic": "APPLICATION SECURITY",
+    "folder": "05-appsec",
+    "file": "05-appsec-02-poster.png",
+    "style": "poster",
+    "caption_hint": "OWASP Top 10"
+  },
+  {
+    "account_index": 5,
+    "topic": "APPLICATION SECURITY",
+    "folder": "05-appsec",
+    "file": "05-appsec-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "bandit + semgrep"
+  },
+  {
+    "account_index": 5,
+    "topic": "APPLICATION SECURITY",
+    "folder": "05-appsec",
+    "file": "05-appsec-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "SAST → DAST"
+  },
+  {
+    "account_index": 6,
+    "topic": "KUBERNETES & GITOPS",
+    "folder": "06-kubernetes",
+    "file": "06-kubernetes-01-poster.png",
+    "style": "poster",
+    "caption_hint": "Kubernetes"
+  },
+  {
+    "account_index": 6,
+    "topic": "KUBERNETES & GITOPS",
+    "folder": "06-kubernetes",
+    "file": "06-kubernetes-02-poster.png",
+    "style": "poster",
+    "caption_hint": "Argo CD"
+  },
+  {
+    "account_index": 6,
+    "topic": "KUBERNETES & GITOPS",
+    "folder": "06-kubernetes",
+    "file": "06-kubernetes-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "kubectl get pods"
+  },
+  {
+    "account_index": 6,
+    "topic": "KUBERNETES & GITOPS",
+    "folder": "06-kubernetes",
+    "file": "06-kubernetes-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "Cluster Hardening"
+  },
+  {
+    "account_index": 7,
+    "topic": "OBSERVABILITY",
+    "folder": "07-observability",
+    "file": "07-observability-01-poster.png",
+    "style": "poster",
+    "caption_hint": "Prometheus"
+  },
+  {
+    "account_index": 7,
+    "topic": "OBSERVABILITY",
+    "folder": "07-observability",
+    "file": "07-observability-02-poster.png",
+    "style": "poster",
+    "caption_hint": "Open Telemetry"
+  },
+  {
+    "account_index": 7,
+    "topic": "OBSERVABILITY",
+    "folder": "07-observability",
+    "file": "07-observability-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "promtool + PromQL"
+  },
+  {
+    "account_index": 7,
+    "topic": "OBSERVABILITY",
+    "folder": "07-observability",
+    "file": "07-observability-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "Der Stack"
+  },
+  {
+    "account_index": 8,
+    "topic": "LANGUAGES & TOOLING",
+    "folder": "08-languages",
+    "file": "08-languages-01-poster.png",
+    "style": "poster",
+    "caption_hint": "Python"
+  },
+  {
+    "account_index": 8,
+    "topic": "LANGUAGES & TOOLING",
+    "folder": "08-languages",
+    "file": "08-languages-02-poster.png",
+    "style": "poster",
+    "caption_hint": "Go"
+  },
+  {
+    "account_index": 8,
+    "topic": "LANGUAGES & TOOLING",
+    "folder": "08-languages",
+    "file": "08-languages-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "bash strict mode"
+  },
+  {
+    "account_index": 8,
+    "topic": "LANGUAGES & TOOLING",
+    "folder": "08-languages",
+    "file": "08-languages-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "Was wofür"
+  },
+  {
+    "account_index": 9,
+    "topic": "SUPPLY CHAIN SECURITY",
+    "folder": "09-supply-chain",
+    "file": "09-supply-chain-01-poster.png",
+    "style": "poster",
+    "caption_hint": "SBOM"
+  },
+  {
+    "account_index": 9,
+    "topic": "SUPPLY CHAIN SECURITY",
+    "folder": "09-supply-chain",
+    "file": "09-supply-chain-02-poster.png",
+    "style": "poster",
+    "caption_hint": "Sigstore"
+  },
+  {
+    "account_index": 9,
+    "topic": "SUPPLY CHAIN SECURITY",
+    "folder": "09-supply-chain",
+    "file": "09-supply-chain-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "syft + cosign"
+  },
+  {
+    "account_index": 9,
+    "topic": "SUPPLY CHAIN SECURITY",
+    "folder": "09-supply-chain",
+    "file": "09-supply-chain-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "Trusted Artifact"
+  },
+  {
+    "account_index": 10,
+    "topic": "OFFENSIVE SECURITY",
+    "folder": "10-offensive",
+    "file": "10-offensive-01-poster.png",
+    "style": "poster",
+    "caption_hint": "Burp Suite"
+  },
+  {
+    "account_index": 10,
+    "topic": "OFFENSIVE SECURITY",
+    "folder": "10-offensive",
+    "file": "10-offensive-02-poster.png",
+    "style": "poster",
+    "caption_hint": "Nuclei"
+  },
+  {
+    "account_index": 10,
+    "topic": "OFFENSIVE SECURITY",
+    "folder": "10-offensive",
+    "file": "10-offensive-03-terminal.png",
+    "style": "terminal",
+    "caption_hint": "nuclei run"
+  },
+  {
+    "account_index": 10,
+    "topic": "OFFENSIVE SECURITY",
+    "folder": "10-offensive",
+    "file": "10-offensive-04-diagram.png",
+    "style": "diagram",
+    "caption_hint": "Recon → Report"
+  }
+]

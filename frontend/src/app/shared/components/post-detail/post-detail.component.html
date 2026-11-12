@@ -1,0 +1,102 @@
+<div class="post-detail-dialog">
+  <!-- Image side -->
+  <div class="image-side">
+    @if (post().image) {
+      <img
+        [src]="post().image"
+        [alt]="post().caption || 'Post'"
+        class="post-image"
+        (error)="onImageError($event)"
+      />
+    } @else {
+      <div class="no-image">
+        <mat-icon>image_not_supported</mat-icon>
+      </div>
+    }
+  </div>
+
+  <!-- Info side -->
+  <div class="info-side">
+    <!-- Header -->
+    <div class="info-header">
+      <a [routerLink]="['/profile', post().owner.id]" (click)="dialogRef.close()" class="owner-link">
+        @if (post().owner.avatar) {
+          <img [src]="post().owner.avatar" [alt]="post().owner.username" class="owner-avatar" />
+        } @else {
+          <div class="owner-avatar-placeholder"><mat-icon>person</mat-icon></div>
+        }
+        <strong>{{ post().owner.username }}</strong>
+      </a>
+
+      @if (isOwner) {
+        <button mat-icon-button class="delete-post-btn" (click)="onDeletePost()" title="Delete post">
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+      }
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Caption -->
+    @if (post().caption) {
+      <div class="caption-row">
+        <strong>{{ post().owner.username }}</strong>
+        <span class="caption-text">{{ post().caption }}</span>
+      </div>
+    }
+
+    <!-- Comments -->
+    <div class="comments-list">
+      @if (isLoadingComments()) {
+        <div class="spinner-container"><mat-spinner diameter="24"></mat-spinner></div>
+      } @else {
+        @for (comment of comments(); track comment.id) {
+          <div class="comment-row">
+            <a [routerLink]="['/profile', comment.user.id]" (click)="dialogRef.close()" class="comment-username">
+              <strong>{{ comment.user.username }}</strong>
+            </a>
+            <span class="comment-text">{{ comment.text }}</span>
+            @if (authService.getCurrentUser()?.id === comment.user.id) {
+              <button mat-icon-button class="delete-comment-btn" (click)="onDeleteComment(comment.id)">
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+        }
+        @if (comments().length === 0 && !post().caption) {
+          <p class="no-comments">No comments yet.</p>
+        }
+      }
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Action error -->
+    @if (actionError()) {
+      <div class="action-error-banner">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ actionError() }}</span>
+      </div>
+    }
+
+    <!-- Actions -->
+    <div class="actions-row">
+      <button mat-icon-button (click)="onLikeToggle()" [class.liked]="post().isLikedByCurrentUser">
+        <mat-icon>{{ post().isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+      </button>
+      <span class="like-count">{{ post().likeCount }} {{ post().likeCount === 1 ? 'like' : 'likes' }}</span>
+    </div>
+
+    <!-- Add Comment -->
+    <div class="add-comment-row">
+      <input
+        class="comment-input"
+        [(ngModel)]="newCommentText"
+        placeholder="Add a comment…"
+        (keydown.enter)="onAddComment()"
+        maxlength="2200"
+      />
+      <button mat-button [disabled]="!newCommentText.trim()" (click)="onAddComment()">Post</button>
+    </div>
+  </div>
+</div>

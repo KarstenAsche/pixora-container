@@ -1,0 +1,88 @@
+<mat-card class="post-card">
+  <!-- Header -->
+  <mat-card-header class="post-header">
+    <a [routerLink]="['/profile', post.owner.id]" class="owner-link">
+      @if (post.owner.avatar) {
+        <img
+          mat-card-avatar
+          [src]="post.owner.avatar"
+          [alt]="post.owner.username"
+          class="owner-avatar"
+        />
+      } @else {
+        <div mat-card-avatar class="avatar-placeholder avatar-sm">
+          <mat-icon>person</mat-icon>
+        </div>
+      }
+      <mat-card-title class="owner-username">{{ post.owner.username }}</mat-card-title>
+    </a>
+    <mat-card-subtitle class="post-time">{{ post.createdAt | timeAgo }}</mat-card-subtitle>
+
+    @if (isOwner) {
+      <button
+        mat-icon-button
+        class="delete-btn"
+        (click)="onDelete()"
+        aria-label="Delete post"
+        title="Delete post"
+      >
+        <mat-icon>delete_outline</mat-icon>
+      </button>
+    }
+  </mat-card-header>
+
+  <!-- Post Image -->
+  <div class="post-image-container">
+    <img
+      [src]="post.image"
+      [alt]="post.caption || 'Post image'"
+      class="post-image"
+      loading="lazy"
+    />
+  </div>
+
+  <!-- Actions -->
+  <mat-card-actions class="post-actions">
+    <button
+      mat-icon-button
+      [class.liked]="post.isLikedByCurrentUser"
+      (click)="onLikeToggle()"
+      [attr.aria-label]="post.isLikedByCurrentUser ? 'Unlike post' : 'Like post'"
+    >
+      <mat-icon>{{ post.isLikedByCurrentUser ? 'favorite' : 'favorite_border' }}</mat-icon>
+    </button>
+
+    <button
+      mat-icon-button
+      (click)="onCommentClick()"
+      aria-label="View comments"
+    >
+      <mat-icon>chat_bubble_outline</mat-icon>
+    </button>
+  </mat-card-actions>
+
+  <!-- Counts -->
+  <mat-card-content class="post-content">
+    @if (post.likeCount > 0) {
+      <p class="like-count">
+        <strong>{{ post.likeCount }} {{ post.likeCount === 1 ? 'like' : 'likes' }}</strong>
+      </p>
+    }
+
+    @if (post.caption) {
+      <p class="caption">
+        <a [routerLink]="['/profile', post.owner.id]" class="caption-owner">{{ post.owner.username }}</a>
+        {{ post.caption }}
+      </p>
+    }
+
+    @if (post.commentCount > 0) {
+      <button
+        class="view-comments-btn"
+        (click)="onCommentClick()"
+      >
+        View all {{ post.commentCount }} {{ post.commentCount === 1 ? 'comment' : 'comments' }}
+      </button>
+    }
+  </mat-card-content>
+</mat-card>

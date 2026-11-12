@@ -1,0 +1,75 @@
+<app-navbar></app-navbar>
+
+<main class="explore-page">
+  <div class="explore-container">
+    <div class="headline-container">
+      <h1 class="page-title">Explore</h1>
+
+      <!-- Search Input -->
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="search-field">
+        <mat-label>Search users</mat-label>
+        <input
+          matInput
+          [formControl]="searchControl"
+          placeholder="Search by username..."
+          autocomplete="off"
+        />
+        <mat-icon matPrefix>search</mat-icon>
+        @if (isSearching()) {
+          <mat-spinner matSuffix diameter="20"></mat-spinner>
+        } @else if (searchControl.value) {
+          <button mat-icon-button matSuffix (click)="clearSearch()" aria-label="Clear search">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- Section title -->
+    <h2 class="section-title">
+      @if (isSearchMode()) {
+        @if (isSearching()) {
+          Searching...
+        } @else {
+          {{ searchResults().length }} result{{ searchResults().length !== 1 ? 's' : '' }} found
+        }
+      } @else {
+        Suggested for you
+      }
+    </h2>
+
+    <!-- Loading State -->
+    @if (isLoading() && !isSearchMode()) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Finding people to follow...</p>
+      </div>
+    }
+
+    <!-- Users Grid -->
+    @if (!isLoading() || isSearchMode()) {
+      @if (displayedUsers.length > 0) {
+        <div class="users-grid">
+          @for (user of displayedUsers; track user.id) {
+            <app-user-card
+              [user]="user"
+              (followToggled)="onFollowToggle($event)"
+            ></app-user-card>
+          }
+        </div>
+      } @else if (!isLoading() && !isSearching()) {
+        <div class="empty-state">
+          @if (isSearchMode()) {
+            <mat-icon>search_off</mat-icon>
+            <h3>No users found</h3>
+            <p>Try a different search term.</p>
+          } @else {
+            <mat-icon>people_outline</mat-icon>
+            <h3>No suggestions</h3>
+            <p>Check back later for users to follow.</p>
+          }
+        </div>
+      }
+    }
+  </div>
+</main>

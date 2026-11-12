@@ -1,0 +1,91 @@
+<h2 mat-dialog-title>Edit Profile</h2>
+
+<mat-dialog-content class="edit-content">
+  <form [formGroup]="editForm" (ngSubmit)="onSubmit()">
+    <!-- Avatar Section -->
+    <div class="avatar-section">
+      <div class="avatar-preview-wrapper">
+        @if (avatarPreviewUrl) {
+          <img
+            [src]="avatarPreviewUrl"
+            alt="Avatar preview"
+            class="avatar-preview"
+          />
+        } @else {
+          <div class="avatar-preview-placeholder">
+            <mat-icon>person</mat-icon>
+          </div>
+        }
+      </div>
+
+      <div class="avatar-actions">
+        <button
+          mat-stroked-button
+          type="button"
+          (click)="avatarInput.click()"
+        >
+          <mat-icon>photo_camera</mat-icon>
+          Change Photo
+        </button>
+        <p class="avatar-hint">JPG or PNG, max 5MB</p>
+      </div>
+
+      <input
+        #avatarInput
+        type="file"
+        accept="image/*"
+        class="hidden-input"
+        (change)="onAvatarSelected($event)"
+      />
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Email Field -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Email</mat-label>
+      <input matInput type="email" formControlName="email" />
+      <mat-icon matPrefix>email</mat-icon>
+      @if (editForm.get('email')?.hasError('required') && editForm.get('email')?.touched) {
+        <mat-error>Email is required</mat-error>
+      }
+      @if (editForm.get('email')?.hasError('email') && editForm.get('email')?.touched) {
+        <mat-error>Please enter a valid email</mat-error>
+      }
+    </mat-form-field>
+
+    <!-- Bio Field -->
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Bio</mat-label>
+      <textarea
+        matInput
+        formControlName="bio"
+        rows="3"
+        placeholder="Tell something about yourself..."
+        maxlength="150"
+      ></textarea>
+      <mat-hint align="end">{{ editForm.value.bio?.length ?? 0 }}/150</mat-hint>
+      @if (editForm.get('bio')?.hasError('maxlength')) {
+        <mat-error>Bio cannot exceed 150 characters</mat-error>
+      }
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="isLoading()">
+    Cancel
+  </button>
+  <button
+    mat-flat-button
+    color="primary"
+    (click)="onSubmit()"
+    [disabled]="editForm.invalid || isLoading()"
+  >
+    @if (isLoading()) {
+      <mat-spinner diameter="20"></mat-spinner>
+    } @else {
+      Save Changes
+    }
+  </button>
+</mat-dialog-actions>

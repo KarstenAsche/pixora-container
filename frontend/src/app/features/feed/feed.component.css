@@ -1,0 +1,71 @@
+.feed-page {
+  margin-top: var(--navbar-height);
+  min-height: calc(100vh - var(--navbar-height));
+  background-color: var(--bg-base);
+}
+
+.feed-container {
+  max-width: var(--post-card-max-width);
+  margin: 0 auto;
+  padding: 28px 16px 96px;
+}
+
+.posts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.comment-section-wrapper {
+  width: 100%;
+  max-width: var(--post-card-max-width);
+  margin: -14px auto 28px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.load-more {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+
+  button {
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 10px;
+  }
+}
+
+/* Floating action button */
+.fab-btn {
+  position: fixed;
+  bottom: 36px;
+  right: 36px;
+  z-index: 100;
+}
+
+/* Override FAB styling for gradient look */
+.fab-btn button {
+  background: var(--gradient) ;
+  box-shadow: 0 4px 20px rgba(8, 76, 97, 0.40) ;
+  transition: box-shadow 250ms, transform 250ms;
+
+  &:hover {
+    box-shadow: 0 8px 32px rgba(8, 76, 97, 0.55) ;
+  }
+}
+
+@media (max-width: 768px) {
+  .feed-container { padding: 16px 0 80px; }
+  .fab-btn { bottom: 20px; right: 20px; }
+}
+
+@media (max-width: 650px) {
+  .posts-list { padding: 0 16px; }
+}

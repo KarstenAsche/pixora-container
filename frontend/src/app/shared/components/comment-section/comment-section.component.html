@@ -1,0 +1,66 @@
+<div class="comment-section">
+  <!-- Comments List -->
+  @if (comments.length > 0) {
+    <div class="comments-list">
+      @for (comment of comments; track comment.id) {
+        <div class="comment-item">
+          <a [routerLink]="['/profile', comment.user.id]" class="comment-avatar-link">
+            @if (comment.user.avatar) {
+              <img
+                [src]="comment.user.avatar"
+                [alt]="comment.user.username"
+                class="avatar avatar-sm"
+              />
+            } @else {
+              <div class="avatar-placeholder avatar-sm">
+                <mat-icon>person</mat-icon>
+              </div>
+            }
+          </a>
+
+          <div class="comment-body">
+            <a [routerLink]="['/profile', comment.user.id]" class="comment-username">
+              {{ comment.user.username }}
+            </a>
+            <p class="comment-text">{{ comment.text }}</p>
+            <span class="comment-time">{{ comment.createdAt | timeAgo }}</span>
+          </div>
+
+          @if (isOwnComment(comment)) {
+            <button
+              mat-icon-button
+              class="delete-comment-btn"
+              (click)="onDeleteComment(comment.id)"
+              aria-label="Delete comment"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="no-comments">No comments yet. Be the first to comment!</p>
+  }
+
+  <mat-divider></mat-divider>
+
+  <!-- Add Comment Form -->
+  <form class="add-comment-form" [formGroup]="commentForm" (ngSubmit)="onSubmit()">
+    <input
+      class="comment-plain-input"
+      formControlName="text"
+      placeholder="Add a comment…"
+      autocomplete="off"
+      maxlength="2200"
+    />
+    <button
+      mat-button
+      color="primary"
+      type="submit"
+      [disabled]="!commentForm.value.text?.trim()"
+    >
+      Post
+    </button>
+  </form>
+</div>

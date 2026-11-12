@@ -1,0 +1,57 @@
+<mat-toolbar class="navbar" color="primary">
+  <div class="navbar-inner">
+    <!-- Brand -->
+    <a class="brand" routerLink="/feed">{{ appName }}</a>
+
+    <!-- Nav Links (desktop) -->
+    <nav class="nav-links">
+      <a mat-button routerLink="/feed" routerLinkActive="active-link">
+        <mat-icon>home</mat-icon>
+        <span class="nav-label">Feed</span>
+      </a>
+      <a mat-button routerLink="/explore" routerLinkActive="active-link">
+        <mat-icon>explore</mat-icon>
+        <span class="nav-label">Explore</span>
+      </a>
+    </nav>
+
+    <span class="spacer"></span>
+
+    <!-- Upload Button -->
+    <button mat-icon-button (click)="openUploadModal()" aria-label="Upload post" title="Upload new post">
+      <mat-icon>add_box</mat-icon>
+    </button>
+
+    <!-- User Menu -->
+    @if (currentUser$ | async; as user) {
+      <button
+        mat-button
+        [matMenuTriggerFor]="userMenu"
+        class="user-menu-trigger"
+        aria-label="User menu"
+      >
+        <span class="nav-avatar-slot">
+          @if (user.avatar) {
+            <img [src]="user.avatar" [alt]="user.username" class="nav-avatar" />
+          } @else {
+            <mat-icon class="avatar-fallback-icon">account_circle</mat-icon>
+          }
+        </span>
+        <span class="username-label">{{ user.username }}</span>
+        <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+
+      <mat-menu #userMenu="matMenu">
+        <a mat-menu-item [routerLink]="['/profile', user.id]">
+          <mat-icon>person</mat-icon>
+          <span>Profile</span>
+        </a>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Logout</span>
+        </button>
+      </mat-menu>
+    }
+  </div>
+</mat-toolbar>

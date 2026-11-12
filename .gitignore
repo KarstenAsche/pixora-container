@@ -1,0 +1,57 @@
+# Python / Django
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.env
+*.env
+backend/.env
+backend/media/*
+!backend/media/posts/
+backend/media/posts/*
+!backend/media/posts/seed/
+backend/staticfiles/
+db.sqlite3
+.python-version
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Node / Angular
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerenv
+
+# Coverage
+.coverage
+htmlcov/
+coverage/
+
+# Logs
+*.log

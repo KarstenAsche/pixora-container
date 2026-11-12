@@ -1,0 +1,185 @@
+<app-navbar></app-navbar>
+
+<main class="profile-page">
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+
+  @if (loadError()) {
+    <div class="profile-error-banner">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ loadError() }}</span>
+    </div>
+  }
+
+  @if (profile(); as profile) {
+    <div class="profile-container">
+      <!-- Profile Header -->
+      <header class="profile-header">
+        <!-- Avatar -->
+        <div class="avatar-wrapper">
+          @if (profile.avatar) {
+            <img
+              [src]="profile.avatar"
+              [alt]="profile.username"
+              class="profile-avatar"
+            />
+          } @else {
+            <div class="profile-avatar-placeholder">
+              <mat-icon>person</mat-icon>
+            </div>
+          }
+        </div>
+
+        <!-- Profile Info -->
+        <div class="profile-info">
+          <div class="profile-top-row">
+            <h2 class="profile-username">{{ profile.username }}</h2>
+
+            <div class="profile-actions">
+              @if (isOwnProfile) {
+                <button mat-stroked-button (click)="openEditDialog()">
+                  Edit Profile
+                </button>
+                <button mat-icon-button (click)="logout()" title="Logout">
+                  <mat-icon>logout</mat-icon>
+                </button>
+              } @else {
+                <button
+                  mat-flat-button
+                  [color]="profile.isFollowedByCurrentUser ? '' : 'primary'"
+                  [class.unfollow-btn]="profile.isFollowedByCurrentUser"
+                  (click)="onFollowToggle()"
+                >
+                  {{ profile.isFollowedByCurrentUser ? 'Unfollow' : 'Follow' }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="profile-stats">
+            <div class="stat-item">
+              <strong>{{ profile.postCount }}</strong>
+              <span>posts</span>
+            </div>
+            <div class="stat-item">
+              <strong>{{ profile.followerCount }}</strong>
+              <span>followers</span>
+            </div>
+            <div class="stat-item">
+              <strong>{{ profile.followingCount }}</strong>
+              <span>following</span>
+            </div>
+          </div>
+
+          <!-- Bio -->
+          @if (profile.bio) {
+            <p class="profile-bio">{{ profile.bio }}</p>
+          }
+        </div>
+      </header>
+
+      <!-- Tabs -->
+      <mat-tab-group (selectedIndexChange)="onTabChange($event)" class="profile-tabs">
+        <!-- Posts Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>grid_on</mat-icon>
+            <span>Posts</span>
+          </ng-template>
+
+          @if (posts().length > 0) {
+            <div class="posts-grid">
+              @for (post of posts(); track trackByPost($index, post)) {
+                <div class="post-thumbnail" (click)="openPostDetail(post)" (keydown.enter)="openPostDetail(post)" (keydown.space)="openPostDetail(post)" role="button" tabindex="0">
+                  @if (post.image) {
+                    <img
+                      [src]="post.image"
+                      [alt]="post.caption || 'Post'"
+                      loading="lazy"
+                    />
+                  } @else {
+                    <div class="no-image-thumb"><mat-icon>image_not_supported</mat-icon></div>
+                  }
+                  <div class="post-overlay">
+                    <span><mat-icon>favorite</mat-icon> {{ post.likeCount }}</span>
+                    <span><mat-icon>chat_bubble</mat-icon> {{ post.commentCount }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>photo_camera</mat-icon>
+              <h3>No Posts Yet</h3>
+              <p>When you share photos, they will appear here.</p>
+            </div>
+          }
+        </mat-tab>
+
+        <!-- Followers Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>people</mat-icon>
+            <span>Followers</span>
+          </ng-template>
+
+          @if (followers().length > 0) {
+            <div class="users-list">
+              @for (user of followers(); track user.id) {
+                <div class="user-list-item">
+                  <a [routerLink]="['/profile', user.id]" class="user-link">
+                    @if (user.avatar) {
+                      <img [src]="user.avatar" [alt]="user.username" class="avatar avatar-sm" />
+                    } @else {
+                      <div class="avatar-placeholder avatar-sm"><mat-icon>person</mat-icon></div>
+                    }
+                    <span>{{ user.username }}</span>
+                  </a>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>people_outline</mat-icon>
+              <p>No followers yet.</p>
+            </div>
+          }
+        </mat-tab>
+
+        <!-- Following Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>person_add</mat-icon>
+            <span>Following</span>
+          </ng-template>
+
+          @if (following().length > 0) {
+            <div class="users-list">
+              @for (user of following(); track user.id) {
+                <div class="user-list-item">
+                  <a [routerLink]="['/profile', user.id]" class="user-link">
+                    @if (user.avatar) {
+                      <img [src]="user.avatar" [alt]="user.username" class="avatar avatar-sm" />
+                    } @else {
+                      <div class="avatar-placeholder avatar-sm"><mat-icon>person</mat-icon></div>
+                    }
+                    <span>{{ user.username }}</span>
+                  </a>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>person_search</mat-icon>
+              <p>Not following anyone yet.</p>
+            </div>
+          }
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+  }
+</main>

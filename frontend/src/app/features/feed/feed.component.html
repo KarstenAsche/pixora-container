@@ -1,0 +1,90 @@
+<app-navbar></app-navbar>
+
+<main class="feed-page">
+  <div class="feed-container">
+    <!-- Error state -->
+    @if (feedError()) {
+      <div class="feed-error-banner">
+        <mat-icon>cloud_off</mat-icon>
+        <span>{{ feedError() }}</span>
+        <button mat-stroked-button (click)="loadFeed(currentPage())">Retry</button>
+      </div>
+    }
+
+    <!-- Loading state (initial) -->
+    @if (isLoading$ | async) {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading your feed...</p>
+      </div>
+    }
+
+    <!-- Posts list -->
+    @if (posts$ | async; as posts) {
+      @if (posts.length > 0) {
+        <div class="posts-list">
+          @for (post of posts; track trackByPost($index, post)) {
+            <app-post-card
+              [post]="post"
+              (liked)="onLike($event)"
+              (unliked)="onUnlike($event)"
+              (deleted)="onDelete($event)"
+              (commentClicked)="onCommentClick($event)"
+            ></app-post-card>
+
+            @if (isCommentsOpen(post.id)) {
+              <app-comment-section
+                [postId]="post.id"
+                [comments]="getCommentsForPost(post.id)"
+                (commentAdded)="onCommentAdded(post.id, $event)"
+                (commentDeleted)="onCommentDeleted(post.id, $event)"
+                class="comment-section-wrapper"
+              ></app-comment-section>
+            }
+          }
+        </div>
+
+        <!-- Load More -->
+        @if (hasMore()) {
+          <div class="load-more">
+            <button
+              mat-stroked-button
+              color="primary"
+              (click)="loadMore()"
+              [disabled]="isLoading$ | async"
+            >
+              @if (isLoading$ | async) {
+                <mat-spinner diameter="20"></mat-spinner>
+              } @else {
+                Load more posts
+              }
+            </button>
+          </div>
+        }
+      } @else if ((isLoading$ | async) === false) {
+        <!-- Empty State -->
+        <div class="empty-state">
+          <mat-icon>photo_library</mat-icon>
+          <h3>No posts yet</h3>
+          <p>Follow some users or share your first photo!</p>
+          <button mat-flat-button color="primary" (click)="openUploadModal()">
+            <mat-icon>add_photo_alternate</mat-icon>
+            Share a photo
+          </button>
+        </div>
+      }
+    }
+  </div>
+</main>
+
+<!-- Floating Action Button -->
+<button
+  mat-fab
+  color="primary"
+  class="fab-btn"
+  (click)="openUploadModal()"
+  aria-label="Create new post"
+  title="Create new post"
+>
+  <mat-icon>add</mat-icon>
+</button>
