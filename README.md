@@ -1,8 +1,10 @@
 # Pixora – Docker Containerization
 
-Pixora is a full-stack image-sharing application with an Angular frontend and a Django REST API. This repository packages both applications into separate Docker images and runs them together with Docker Compose.
+Pixora is a full-stack, Instagram-like application built with Angular 21 and Django 6. It supports photo sharing, user profiles, follows, likes, and comments.
 
-This project covers **local containerization and verification only**. Publishing images, CI/CD pipelines, and cloud deployment are outside its scope.
+This repository packages the Angular frontend and Django REST API into separate Docker images and runs them together using Docker Compose.
+
+This project covers **local containerization and verification only**. Publishing images, creating new CI/CD workflows, and cloud deployment are outside its scope. The existing repository workflow is not part of the containerization changes.
 
 ## Project objectives
 
@@ -142,12 +144,14 @@ Build both application images:
 docker compose build
 ```
 
-Or build individual images:
+Or build each image separately using the Compose configuration:
 
 ```bash
-docker build -t pixora-backend:1.0.0 ./backend
-docker build -t pixora-frontend:1.0.0 ./frontend
+docker compose build backend
+docker compose build frontend
 ```
+
+Compose assigns the application image tags `pixora-backend:1.0.0` and `pixora-frontend:1.0.0`.
 
 ### Start, stop, and restart
 
@@ -185,6 +189,83 @@ The `migrate` service automatically runs `python manage.py migrate --noinput` be
 ```bash
 docker compose exec backend python manage.py showmigrations
 ```
+
+## Local development without Docker
+
+The original application can also be run directly for development. These instructions are separate from the Docker Quickstart above.
+
+### Prerequisites
+
+- Python 3.12 or newer
+- A Node.js version compatible with Angular 21 (Node.js 24 was used for this project)
+- pnpm
+
+### Backend
+
+From the repository root, create an environment file for Django:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Set a strong `SECRET_KEY` in `backend/.env`. The original development configuration uses SQLite, so a separate database server is not required.
+
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+The activation command above works in Bash (including Git Bash). On Windows PowerShell, use `.venv\Scripts\Activate.ps1` instead.
+
+Django runs at `http://localhost:8000`, with its admin interface at `http://localhost:8000/admin/`.
+
+### Frontend
+
+Open a second terminal:
+
+```bash
+cd frontend
+pnpm install
+pnpm start
+```
+
+Angular runs at `http://localhost:4200`.
+
+### Seed the database (optional)
+
+The original Pixora application documents a command for generating sample users and posts:
+
+```bash
+cd backend
+python manage.py seed_db
+```
+
+This command was not verified as part of the Docker containerization tests. In particular, sample-media behavior inside the containers has not been confirmed.
+
+## API overview
+
+These endpoints are documented by the original Pixora project; they were not all individually retested during containerization.
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/api/auth/register/` | Register a new user |
+| POST | `/api/auth/login/` | Obtain JWT tokens |
+| POST | `/api/auth/refresh/` | Refresh access token |
+| GET | `/api/users/me/` | Current user profile |
+| GET | `/api/users/{id}/` | User profile |
+| POST | `/api/users/{id}/follow/` | Follow a user |
+| POST | `/api/users/{id}/unfollow/` | Unfollow a user |
+| GET | `/api/posts/` | Feed (followed users) |
+| POST | `/api/posts/` | Create a post |
+| DELETE | `/api/posts/{id}/` | Delete own post |
+| POST | `/api/posts/{id}/like/` | Like a post |
+| POST | `/api/posts/{id}/unlike/` | Unlike a post |
+| POST | `/api/posts/{id}/comments/` | Add a comment |
+| DELETE | `/api/posts/{id}/comments/{id}/` | Delete own comment |
 
 ## Persistence
 
@@ -229,8 +310,9 @@ The following checks were performed during the containerization work:
 | Uploaded image served correctly after proxy adjustment | Passed |
 | Database and media survived Compose restart/recreation | Passed |
 | Migrations against a separate empty SQLite volume | Passed |
+| Isolated fresh Compose startup with separate database/media volumes | Passed (registration, login, post creation, image upload) |
 
-A complete new-machine checkout and end-to-end startup with entirely fresh volumes has **not** been independently verified yet; the empty-database migration was tested separately.
+A complete first-start test was performed in an isolated Docker Compose project with fresh database and media volumes. Registration, login, post creation, and image upload were verified. A separate checkout on another machine was not tested.
 
 Suggested smoke test for a reviewer:
 
@@ -258,13 +340,11 @@ Nginx's default request-body limit prevented a 3.25 MB upload. The frontend Ngin
 
 A separate one-shot `migrate` service initializes the SQLite schema. The backend waits for successful migration completion, and the frontend waits for the backend healthcheck.
 
-### Dependency Version Pinning
+### Dependency version pinning
 
-The Python dependencies in `backend/requirements.txt` use explicit version numbers (`==`) instead of minimum version requirements (`>=`).
+The direct Python dependencies in `backend/requirements.txt` use exact versions (`==`) instead of minimum versions (`>=`). These versions were taken from the successfully tested backend container to reduce unexpected dependency changes and improve reproducibility.
 
-These versions were taken from the successfully tested backend container to improve build reproducibility and reduce the risk of unexpected dependency updates.
-
-Transitive dependencies are not fully pinned, so builds may still vary over time
+Transitive dependencies are not fully pinned, so builds may still differ over time.
 
 ## Troubleshooting
 
@@ -284,5 +364,5 @@ Transitive dependencies are not fully pinned, so builds may still vary over time
 - `.dockerignore` files exclude local dependencies, development environments, secrets, and generated artifacts from image build contexts.
 - The backend has no host-published port; the frontend is bound to the local loopback interface.
 - `DEBUG=True` and Django's `runserver` are used **only for local development/testing**, not for public production hosting.
-- No GitHub Actions, image publishing, cloud deployment, or server provisioning are included in this project.
+- No new GitHub Actions workflows, image publishing, cloud deployment, or server provisioning are included in the containerization work.
 - Keep the feature branch separate from the default branch until the project is reviewed and approved.
