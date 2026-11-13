@@ -1,0 +1,73 @@
+services:
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: pixora-backend:1.0.0
+    env_file:
+      - .env
+    environment:
+      USE_SQLITE: "True"
+      SQLITE_PATH: /app/data/db.sqlite3
+      MEDIA_ROOT: /app/media
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    volumes:
+      - pixora_db:/app/data
+    networks:
+      - pixora_network
+    restart: "no"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: pixora-backend:1.0.0
+    env_file:
+      - .env
+    environment:
+      USE_SQLITE: "True"
+      SQLITE_PATH: /app/data/db.sqlite3
+      MEDIA_ROOT: /app/media
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    volumes:
+      - pixora_db:/app/data
+      - pixora_media:/app/media
+    networks:
+      - pixora_network
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/admin/login/', timeout=5)"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: pixora-frontend:1.0.0
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-4200}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - pixora_network
+    restart: unless-stopped
+
+networks:
+  pixora_network:
+    driver: bridge
+
+volumes:
+  pixora_db:
+    name: pixora_db
+  pixora_media:
+    name: pixora_media
