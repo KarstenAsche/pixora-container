@@ -6,6 +6,35 @@ This repository packages the Angular frontend and Django REST API into separate 
 
 This project covers **local containerization and verification only**. Publishing images, creating new CI/CD workflows, and cloud deployment are outside its scope. The existing repository workflow is not part of the containerization changes.
 
+## Table of contents
+
+- [Project objectives](#project-objectives)
+- [Quickstart](#quickstart)
+- [Repository contents](#repository-contents)
+- [Architecture](#architecture)
+- [Configuration](#configuration)
+- [Usage](#usage)
+  - [Build](#build)
+  - [Start, stop, and restart](#start-stop-and-restart)
+  - [Inspect services and logs](#inspect-services-and-logs)
+  - [Database migrations](#database-migrations)
+- [Local development without Docker](#local-development-without-docker)
+  - [Prerequisites](#prerequisites)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
+  - [Seed the database (optional)](#seed-the-database-optional)
+- [API overview](#api-overview)
+- [Persistence](#persistence)
+- [Testing and verification](#testing-and-verification)
+- [Technical decisions and challenges](#technical-decisions-and-challenges)
+  - [Configurable SQLite location](#configurable-sqlite-location)
+  - [Reverse proxy and media URLs](#reverse-proxy-and-media-urls)
+  - [Upload request size](#upload-request-size)
+  - [Startup ordering](#startup-ordering)
+  - [Dependency version pinning](#dependency-version-pinning)
+- [Troubleshooting](#troubleshooting)
+- [Security and scope](#security-and-scope)
+
 ## Project objectives
 
 - Build separate, multi-stage images for the frontend and backend.
