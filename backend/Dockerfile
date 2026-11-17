@@ -30,6 +30,10 @@ RUN python -m pip install \
 # Copy application files
 COPY . .
 
+RUN mkdir -p /app/staticfiles \
+    && chown -R 999:999 /app/staticfiles
+
+
 # Create non-root user and persistent directories
 RUN groupadd --system appgroup \
     && useradd --system --gid appgroup --home-dir /app appuser \
@@ -40,4 +44,4 @@ USER appuser
 
 EXPOSE 8000
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "pixora.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2"]

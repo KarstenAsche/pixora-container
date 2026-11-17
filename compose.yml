@@ -3,37 +3,42 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: pixora-backend:1.0.0
+    image: pixora-backend:${BACKEND_VERSION:-1.0.0}
     env_file:
       - .env
     environment:
-      USE_SQLITE: "True"
-      SQLITE_PATH: /app/data/db.sqlite3
       MEDIA_ROOT: /app/media
-    command: ["python", "manage.py", "migrate", "--noinput"]
+    command:
+      - sh
+      - -c
+      - >-
+        python manage.py migrate --noinput &&
+        python manage.py collectstatic --noinput
+
     volumes:
-      - pixora_db:/app/data
+      - pixora_static:/app/staticfiles
     networks:
       - pixora_network
     restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: pixora-backend:1.0.0
+    image: pixora-backend:${BACKEND_VERSION:-1.0.0}
     env_file:
       - .env
     environment:
-      USE_SQLITE: "True"
-      SQLITE_PATH: /app/data/db.sqlite3
       MEDIA_ROOT: /app/media
     depends_on:
       migrate:
         condition: service_completed_successfully
     volumes:
-      - pixora_db:/app/data
       - pixora_media:/app/media
+      - pixora_static:/app/staticfiles
     networks:
       - pixora_network
     restart: unless-stopped
@@ -52,9 +57,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    image: pixora-frontend:1.0.0
+    image: pixora-frontend:${FRONTEND_VERSION:-1.0.0}
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-4200}:8080"
+    volumes:
+      - pixora_static:/usr/share/nginx/html/static:ro
     depends_on:
       backend:
         condition: service_healthy
@@ -62,12 +69,33 @@ services:
       - pixora_network
     restart: unless-stopped
 
+  db:
+      image: postgres:17-alpine
+      restart: unless-stopped
+      environment:
+        POSTGRES_DB: ${DB_NAME:-pixora}
+        POSTGRES_USER: ${DB_USER:-pixora}
+        POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
+      volumes:
+        - pixora_postgres:/var/lib/postgresql/data
+        - pixora_static:/usr/share/nginx/html/static:ro
+      networks:
+        - pixora_network
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+
 networks:
   pixora_network:
     driver: bridge
 
 volumes:
-  pixora_db:
-    name: pixora_db
   pixora_media:
     name: pixora_media
+  pixora_postgres:
+    name: pixora_postgres
+  pixora_static:
+    name: pixora_static
