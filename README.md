@@ -2,9 +2,9 @@
 
 Pixora is a full-stack, Instagram-like application built with Angular 21 and Django 6. It supports photo sharing, user profiles, follows, likes, and comments.
 
-This repository packages the Angular frontend and Django REST API into separate Docker images and runs them together using Docker Compose.
+This repository packages the Angular frontend and Django REST API into separate Docker images and runs them together using Docker Compose. PostgreSQL stores application data, Gunicorn serves Django, and Nginx serves Angular and Django static files.
 
-This project covers **local containerization and verification only**. Publishing images, creating new CI/CD workflows, and cloud deployment are outside its scope. The existing repository workflow is not part of the containerization changes.
+This project covers **local containerization and verification only**. Image publishing, new CI/CD workflows, and cloud deployment are outside its scope. The existing repository workflow is not modified.
 
 ## Table of contents
 
@@ -14,76 +14,66 @@ This project covers **local containerization and verification only**. Publishing
 - [Architecture](#architecture)
 - [Configuration](#configuration)
 - [Usage](#usage)
-  - [Build](#build)
-  - [Start, stop, and restart](#start-stop-and-restart)
-  - [Inspect services and logs](#inspect-services-and-logs)
-  - [Database migrations](#database-migrations)
 - [Local development without Docker](#local-development-without-docker)
-  - [Prerequisites](#prerequisites)
-  - [Backend](#backend)
-  - [Frontend](#frontend)
-  - [Seed the database (optional)](#seed-the-database-optional)
 - [API overview](#api-overview)
 - [Persistence](#persistence)
 - [Testing and verification](#testing-and-verification)
 - [Technical decisions and challenges](#technical-decisions-and-challenges)
-  - [Configurable SQLite location](#configurable-sqlite-location)
-  - [Reverse proxy and media URLs](#reverse-proxy-and-media-urls)
-  - [Upload request size](#upload-request-size)
-  - [Startup ordering](#startup-ordering)
-  - [Dependency version pinning](#dependency-version-pinning)
 - [Troubleshooting](#troubleshooting)
 - [Security and scope](#security-and-scope)
 
 ## Project objectives
 
-- Build separate, multi-stage images for the frontend and backend.
-- Run the application using a single Docker Compose configuration.
-- Keep application settings and secrets outside container images.
-- Preserve the SQLite database and uploaded media across container recreation.
-- Start the backend only after database migrations finish successfully.
-- Run application processes without root privileges where practical.
-- Document repeatable build, startup, shutdown, and verification procedures.
+- Build separate multi-stage images for the Angular frontend and Django backend.
+- Run the stack through a single Docker Compose configuration.
+- Use PostgreSQL for persistent application data and separate storage for uploaded media.
+- Run database migrations and collect static files before starting the backend.
+- Keep secrets outside images, and run application processes as non-root users.
+- Document setup, daily usage, verification, and known limitations.
 
 ## Quickstart
 
-**Requirements:** Docker Desktop (with Linux containers) or Docker Engine with the Docker Compose plugin. You do not need to install Python, Node.js, or pnpm locally to run the containerized application.
+**Requirements:** Docker Desktop (Linux containers) or Docker Engine with the Docker Compose plugin. Python, Node.js and pnpm are not required on the host for the Docker setup.
 
-1. Clone the repository and enter its directory:
+1. Clone the repository:
 
    ```bash
    git clone https://github.com/KarstenAsche/pixora-container.git
    cd pixora-container
    ```
 
-2. Create a local environment file:
+2. Create the root environment file:
 
    ```bash
    cp .env.example .env
    ```
 
-   Replace the example `SECRET_KEY` with a unique, randomly generated value. Do not commit `.env`. On a machine with Python installed, a suitable value can be generated with:
+   Replace `SECRET_KEY` and `DB_PASSWORD` with strong, unique values. Do not commit `.env`. To generate a Django secret on a machine with Python installed:
 
    ```bash
    python -c "import secrets; print(secrets.token_urlsafe(50))"
    ```
 
-3. Build and start Pixora:
+   Use a password for PostgreSQL that differs from the example placeholder.
+
+3. Build and start the stack:
 
    ```bash
    docker compose up -d --build
    ```
 
-4. Verify that the migration task completed and both application services are running:
+4. Check service status and initialization:
 
    ```bash
    docker compose ps -a
    docker compose logs migrate
    ```
 
-5. Open **http://localhost:4200**. Register a test account, create a post, and upload an image to check the application end to end.
+   `db` and `backend` should be healthy, `frontend` should be running, and the one-shot `migrate` service should have exited with code `0`.
 
-The default configuration binds the frontend to `127.0.0.1`, so it is accessible from the local machine rather than directly from other devices.
+5. Open **http://localhost:4200**, register an account, and create a post with an image.
+
+The frontend is bound to `127.0.0.1` by default and is not directly accessible from other devices.
 
 ## Repository contents
 
@@ -92,7 +82,7 @@ pixora-container/
 ├── backend/
 │   ├── Dockerfile
 │   ├── .dockerignore
-│   ├── .env.example           # Example for running Django without Docker
+│   ├── .env.example       # Direct local Django development
 │   ├── manage.py
 │   └── pixora/
 ├── frontend/
@@ -103,7 +93,7 @@ pixora-container/
 │   ├── angular.json
 │   └── package.json
 ├── compose.yml
-├── .env.example               # Docker Compose configuration example
+├── .env.example           # Docker Compose configuration
 ├── .gitignore
 └── README.md
 ```
@@ -112,134 +102,150 @@ pixora-container/
 
 ```text
 Browser (http://localhost:4200)
-            |
-            v
-Frontend: Nginx (container port 8080)
-   |                      |
-   | /api/                | /media/
-   +----------------------+
-            |
-            v
-Backend: Django (container port 8000)
-     |                  |
-     v                  v
-SQLite volume       Media volume
-
-migrate (one-shot) -> backend (healthy) -> frontend
+               |
+               v
+Angular frontend / Nginx :8080
+       |          |           |
+     /api/      /media/     /static/
+       |          |           |
+       +----------+           +--> Shared static volume (read-only)
+               |
+               v
+       Django / Gunicorn :8000
+               |                 \
+               v                  v
+        PostgreSQL :5432     Media volume
+               ^
+               |
+      migrate (one-shot)
+      migrate + collectstatic
 ```
 
-| Service | Purpose | Network access / port |
+Startup order: **PostgreSQL healthy → migrations and static collection completed → Gunicorn backend healthy → Nginx frontend**.
+
+| Service | Purpose | Access |
 | --- | --- | --- |
-| `frontend` | Serves the built Angular application and proxies API/media requests | Host `127.0.0.1:4200` → container `8080` (configurable host port) |
-| `backend` | Runs the Django REST API | Internal `backend:8000`; no host port published |
-| `migrate` | Applies Django migrations before backend startup | One-shot job; exits successfully with code `0` |
+| `db` | PostgreSQL 17 database | Internal port `5432`; not published to the host |
+| `migrate` | Applies Django migrations and runs `collectstatic` | One-shot task using the backend image |
+| `backend` | Django REST API served by Gunicorn | Internal `backend:8000`; not published to the host |
+| `frontend` | Serves Angular, proxies API/media, and serves Django static assets | `127.0.0.1:4200` to container port `8080` by default |
 
-All three services use the Compose network `pixora_network`. The frontend reaches Django by its Compose service name (`backend`), not by `localhost`.
-
-The Angular production build uses the relative API prefix `/api`. Nginx routes `/api/` and `/media/` to Django. Its proxy configuration forwards the original Host header, including the host port, so generated image URLs remain correct.
+All services communicate over the Compose network `pixora_network`. The frontend proxies `/api/` and `/media/` to `backend:8000`, forwards the original Host header (including the host port), and serves `/static/` directly from the shared static volume.
 
 ## Configuration
 
-Create the root `.env` file from `.env.example` before starting the stack.
+Create the root `.env` from `.env.example`. Database credentials are supplied to both Django services and PostgreSQL by Compose.
 
-| Variable | Purpose | Local value / guidance |
+| Variable | Purpose | Guidance |
 | --- | --- | --- |
-| `SECRET_KEY` | Django signing key | **Required:** replace the placeholder with a random secret |
-| `DEBUG` | Django debug mode | `True` for local testing only |
-| `ALLOWED_HOSTS` | Allowed HTTP hosts | Include `localhost` and `127.0.0.1`; add other hosts only if needed |
-| `CORS_ALLOWED_ORIGINS` | Allowed frontend origins | `http://localhost:4200` for local development |
-| `USE_SQLITE` | Database selection | SQLite is used by the Compose setup |
-| `SQLITE_PATH` | SQLite file location in the backend container | `/app/data/db.sqlite3` |
-| `MEDIA_ROOT` | Uploaded-media directory in the backend container | `/app/media` |
-| `MEDIA_URL` | Media URL prefix | `/media/` |
-| `MAX_IMAGE_SIZE_MB` | Application-side image size limit | `5` |
-| `FRONTEND_PORT` | Host port for the frontend | `4200` by default |
+| `SECRET_KEY` | Django signing key | Replace placeholder with a unique secret |
+| `DEBUG` | Django debug mode | Enable only for local development |
+| `ALLOWED_HOSTS` | Accepted Django HTTP hosts | Include `localhost` and `127.0.0.1` for the current local setup and healthcheck |
+| `CORS_ALLOWED_ORIGINS` | Allowed frontend origins | Set as needed for local development; Nginx uses same-origin API requests |
+| `DB_NAME` | PostgreSQL database name | Typically `pixora` |
+| `DB_USER` | PostgreSQL username | Typically `pixora` |
+| `DB_PASSWORD` | PostgreSQL password | **Required**; use a strong local secret |
+| `DB_HOST` | Database host for Django | `db` inside the Docker network |
+| `DB_PORT` | PostgreSQL port | `5432` |
+| `MEDIA_ROOT` | Uploaded-media location | `/app/media` in the backend container |
+| `MEDIA_URL` | Public media path | `/media/` |
+| `MAX_IMAGE_SIZE_MB` | Django image-size limit | `5` in the tested setup |
+| `FRONTEND_PORT` | Host port exposed by Nginx | Default `4200` |
+| `IMAGE_VERSION` | Version tag for application images | Set if using version-variable tags in `compose.yml` |
 
-**Note:** `USE_SQLITE`, `SQLITE_PATH`, and `MEDIA_ROOT` are also explicitly set by the Compose services. Changing only their values in `.env` does not override those service-level settings.
+**Configuration note:** Some runtime paths and database host/port may be explicitly defined in `compose.yml`; service-level `environment` entries take precedence over values from `env_file`. Consult the Compose file before changing those values. The actual `DB_PASSWORD` and `SECRET_KEY` must never be committed.
 
-If you change `FRONTEND_PORT`, update browser URLs accordingly. If frontend origins are used outside the same-origin Nginx proxy, review `CORS_ALLOWED_ORIGINS` too.
+Changing `FRONTEND_PORT` also changes the browser URL. Check any configured CORS origins when accessing services outside Nginx's same-origin proxy.
 
-Neither the real `.env` file nor credentials belong in Git or in an image. The separate `backend/.env.example` is intended for running Django directly without Compose.
+The separate `backend/.env.example` is for running Django directly outside Docker.
 
 ## Usage
 
-Run these commands from the repository root.
+Run the following commands from the repository root.
 
 ### Build
 
-Build both application images:
-
 ```bash
-docker compose build
+docker compose build                 # Build application images
+docker compose build backend         # Build only the backend image
+docker compose build frontend        # Build only the frontend image
 ```
 
-Or build each image separately using the Compose configuration:
-
-```bash
-docker compose build backend
-docker compose build frontend
-```
-
-Compose assigns the application image tags `pixora-backend:1.0.0` and `pixora-frontend:1.0.0`.
+The migration service uses the same backend image as Gunicorn. If `compose.yml` specifies `IMAGE_VERSION`, both application tags can be changed centrally in `.env`; the value is **not incremented automatically** by Compose.
 
 ### Start, stop, and restart
 
 ```bash
-docker compose up -d --build     # Build (if needed) and start
-docker compose stop              # Stop without removing containers
-docker compose start             # Start stopped containers
-docker compose restart           # Restart running services
-docker compose down              # Stop and remove containers and network
+docker compose up -d --build          # Build and start
+docker compose stop                   # Stop without removing containers
+docker compose start                  # Start stopped containers
+docker compose restart                # Restart running services
+docker compose down                   # Remove containers and network, preserve volumes
 ```
 
-To rebuild a changed image and recreate its service:
+For a recreation test without deleting data:
 
 ```bash
-docker compose up -d --build
+docker compose up -d --force-recreate
 ```
 
-**Do not use `docker compose down -v` if you want to preserve data.** The `-v` flag can remove named volumes and their contents.
+**Avoid `docker compose down -v` when preserving data:** it can remove Compose-managed named volumes. A database or media volume created outside Compose may not be deleted by that command, but should not be assumed safe.
 
 ### Inspect services and logs
 
 ```bash
 docker compose ps -a
+docker compose logs db
+docker compose logs migrate
 docker compose logs --tail=100 backend
 docker compose logs --tail=100 frontend
-docker compose logs migrate
 ```
 
-`migrate` should finish with `Exited (0)`, `backend` should become `healthy`, and `frontend` should remain running.
+Expected status: PostgreSQL `healthy`, `migrate` `Exited (0)`, Gunicorn backend `healthy`, and frontend running.
 
-### Database migrations
+### Database migrations and static files
 
-The `migrate` service automatically runs `python manage.py migrate --noinput` before the backend starts. To inspect applied migrations manually:
+The `migrate` service waits for a healthy PostgreSQL database, executes `python manage.py migrate --noinput`, then `python manage.py collectstatic --noinput`. Backend startup depends on successful completion of this task.
+
+Inspect applied migrations:
 
 ```bash
 docker compose exec backend python manage.py showmigrations
 ```
 
+Verify the selected database engine:
+
+```bash
+docker compose exec backend python manage.py shell -c "from django.db import connection; print(connection.vendor)"
+```
+
+Expected value: `postgresql`.
+
+Django static assets are collected to `/app/staticfiles` in a shared volume and mounted read-only inside Nginx. To verify delivery:
+
+```bash
+curl -I http://localhost:4200/static/admin/css/base.css
+```
+
+Expected status: `200 OK`. The Gunicorn process does not serve these static files directly.
+
 ## Local development without Docker
 
-The original application can also be run directly for development. These instructions are separate from the Docker Quickstart above.
+Direct local development is still possible, but **also requires a running PostgreSQL instance**. Unlike the original README, this configuration no longer defaults to SQLite.
 
 ### Prerequisites
 
 - Python 3.12 or newer
-- A Node.js version compatible with Angular 21 (Node.js 24 was used for this project)
+- Node.js compatible with Angular 21 (Node.js 24 was used in this project)
 - pnpm
+- PostgreSQL with a database and user configured for Pixora
 
 ### Backend
 
-From the repository root, create an environment file for Django:
+From the repository root:
 
 ```bash
 cp backend/.env.example backend/.env
-```
-
-Set a strong `SECRET_KEY` in `backend/.env`. The original development configuration uses SQLite, so a separate database server is not required.
-
-```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
@@ -248,13 +254,13 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-The activation command above works in Bash (including Git Bash). On Windows PowerShell, use `.venv\Scripts\Activate.ps1` instead.
+Configure `SECRET_KEY`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST` and `DB_PORT` in `backend/.env` before running migrations. For a PostgreSQL instance running directly on the host, use `DB_HOST=localhost` rather than Compose's service name `db`.
 
-Django runs at `http://localhost:8000`, with its admin interface at `http://localhost:8000/admin/`.
+In Windows PowerShell, activate the environment with `.venv\Scripts\Activate.ps1` instead. The development server is at `http://localhost:8000`; Django admin is at `http://localhost:8000/admin/`.
 
 ### Frontend
 
-Open a second terminal:
+In a second terminal:
 
 ```bash
 cd frontend
@@ -266,14 +272,14 @@ Angular runs at `http://localhost:4200`.
 
 ### Seed the database (optional)
 
-The original Pixora application documents a command for generating sample users and posts:
+The original Pixora application documents a command for creating sample users and posts:
 
 ```bash
 cd backend
 python manage.py seed_db
 ```
 
-This command was not verified as part of the Docker containerization tests. In particular, sample-media behavior inside the containers has not been confirmed.
+This command, including its behavior with sample media under PostgreSQL and Docker, has not been verified during the containerization work.
 
 ## API overview
 
@@ -298,100 +304,104 @@ These endpoints are documented by the original Pixora project; they were not all
 
 ## Persistence
 
-Pixora uses two named Docker volumes:
+Three named Docker volumes support the Compose setup:
 
 | Volume | Mounted path | Stores |
 | --- | --- | --- |
-| `pixora_db` | `/app/data` | SQLite database (`db.sqlite3`) |
-| `pixora_media` | `/app/media` | Uploaded images |
+| `pixora_postgres` | `/var/lib/postgresql/data` in `db` | PostgreSQL data |
+| `pixora_media` | `/app/media` in `backend` | Uploaded images |
+| `pixora_static` | `/app/staticfiles` in `migrate`/`backend`, read-only under `/usr/share/nginx/html/static` in `frontend` | Collected Django static assets |
 
-The Compose file assigns these explicit volume names. If they do not already exist, Compose creates them. They persist independently of container recreation.
+Compose may assign explicit volume names different from the service-level keys; use `docker compose config` to inspect the resolved names. Existing volumes persist when containers are recreated.
 
-To verify persistence, create a user and upload an image, then run:
-
-```bash
-docker compose down
-docker compose up -d --build
-```
-
-Check that the same post and image are still available. For an additional recreation test:
+To check data persistence, create a user and post with an image, then execute:
 
 ```bash
 docker compose up -d --force-recreate
 ```
 
-Do not remove the volumes when cleaning up unless you explicitly intend to delete application data.
+Confirm the same account, post and image remain available. Do not use `down -v` for this test.
 
 ## Testing and verification
 
-The following checks were performed during the containerization work:
+Tests already completed during development:
 
 | Test | Result |
 | --- | --- |
-| Django and Angular started locally without Docker | Passed |
-| Backend multi-stage image build | Passed |
-| Backend Python runtime and non-root user | Passed (Python 3.12.16, UID 999) |
-| Frontend production build and container image build | Passed |
-| Backend migrations with SQLite volume | Passed |
-| Compose migration task completed | Passed (`Exited (0)`) |
-| Backend healthcheck and frontend startup | Passed |
-| Registration, login, and image upload through Nginx | Passed |
-| Uploaded image served correctly after proxy adjustment | Passed |
-| Database and media survived Compose restart/recreation | Passed |
-| Migrations against a separate empty SQLite volume | Passed |
-| Isolated fresh Compose startup with separate database/media volumes | Passed (registration, login, post creation, image upload) |
+| Local Angular and Django development startup before containerization | Passed |
+| Separate multi-stage frontend/backend image builds | Passed |
+| Gunicorn 27.0.1 startup with two workers | Passed |
+| Backend healthcheck under Gunicorn | Passed |
+| PostgreSQL startup and healthcheck | Passed |
+| Django migrations against a fresh PostgreSQL database | Passed |
+| Django reports `connection.vendor` as `postgresql` | Passed |
+| Registration, login, post creation and image upload using PostgreSQL | Passed |
+| PostgreSQL and uploaded media persisted after container recreation | Passed |
+| `collectstatic` completed successfully (157 static files) | Passed |
+| Static volume write test with backend UID 999 on a new test volume | Passed |
+| Nginx served `/static/admin/css/base.css` with HTTP 200 | Passed |
 
-A complete first-start test was performed in an isolated Docker Compose project with fresh database and media volumes. Registration, login, post creation, and image upload were verified. A separate checkout on another machine was not tested.
+The earlier SQLite-based setup was also tested before the PostgreSQL migration, but is no longer the target architecture.
 
-Suggested smoke test for a reviewer:
+**Not yet verified:** an entirely fresh first startup of the final PostgreSQL/Gunicorn/static-volume stack with all required named volumes created from scratch. An independent new-machine checkout has also not been tested.
 
-1. Start the stack with `docker compose up -d --build`.
-2. Check `docker compose ps -a` and `docker compose logs migrate`.
-3. Open `http://localhost:4200` and register a user.
-4. Upload an image smaller than 5 MB and verify it appears in the feed.
-5. Recreate the containers and confirm the post and image remain.
+Reviewer smoke test:
+
+1. Copy `.env.example` to `.env` and set the secrets.
+2. Run `docker compose up -d --build`.
+3. Check `docker compose ps -a` and `docker compose logs migrate`.
+4. Open `http://localhost:4200`, register, log in and create a post with an image.
+5. Recreate containers and verify the user, post and image remain.
+6. Confirm `/static/admin/css/base.css` responds with HTTP 200.
 
 ## Technical decisions and challenges
 
-### Configurable SQLite location
+### PostgreSQL and Gunicorn
 
-Originally Django stored SQLite at `BASE_DIR / 'db.sqlite3'`. The settings now support the optional `SQLITE_PATH` environment variable, while retaining the original location as a fallback for local runs. The container uses `/app/data/db.sqlite3`, backed by a persistent volume.
+PostgreSQL 17 replaces the initial SQLite setup. The database runs as a separate Compose service with persistent storage and a healthcheck. Django runs through Gunicorn instead of the development server. The Django `runserver` command is retained only in the optional local-development instructions.
+
+### Separate initialization service
+
+The one-shot `migrate` service reuses the backend image and runs database migrations followed by `collectstatic`. PostgreSQL must be healthy first. The backend waits for successful completion, while the frontend waits for a healthy backend. This separates database/schema initialization from Gunicorn startup; a backend entrypoint script would be another valid approach.
+
+### Non-root static-file initialization
+
+The backend image prepares `/app/staticfiles` with ownership for UID 999 before switching to the non-root `appuser`. This allows `collectstatic` to populate a new shared static volume without manual permission changes. Nginx mounts the volume read-only and serves requests under `/static/`.
 
 ### Reverse proxy and media URLs
 
-Angular's production configuration requests `/api` from the same origin. Nginx proxies these requests and `/media/` to Django on the internal Compose network. Forwarding `$http_host` rather than `$host` preserves the browser's port in absolute media URLs.
+Angular uses a relative API prefix `/api`. Nginx proxies `/api/` and `/media/` to Django. Forwarding `$http_host` rather than `$host` preserves the original browser port in absolute media URLs.
 
 ### Upload request size
 
-Nginx's default request-body limit prevented a 3.25 MB upload. The frontend Nginx configuration sets `client_max_body_size 10m`, allowing the request to reach Django, where Pixora's 5 MB image limit remains in effect.
-
-### Startup ordering
-
-A separate one-shot `migrate` service initializes the SQLite schema. The backend waits for successful migration completion, and the frontend waits for the backend healthcheck.
+Nginx's default request-body limit initially prevented a 3.25 MB upload. The configuration uses `client_max_body_size 10m` so the request reaches Django, which enforces its own 5 MB image limit.
 
 ### Dependency version pinning
 
-The direct Python dependencies in `backend/requirements.txt` use exact versions (`==`) instead of minimum versions (`>=`). These versions were taken from the successfully tested backend container to reduce unexpected dependency changes and improve reproducibility.
-
-Transitive dependencies are not fully pinned, so builds may still differ over time.
+Direct Python dependencies in `backend/requirements.txt` use exact versions (`==`) rather than minimum versions (`>=`). Transitive dependencies are not fully pinned, so this improves but does not guarantee reproducibility.
 
 ## Troubleshooting
 
 | Symptom | Check / resolution |
 | --- | --- |
-| Docker cannot connect to its daemon | Start Docker Desktop / Docker Engine, then run `docker info` |
-| Port 4200 is already in use | Stop any local Angular dev server or change `FRONTEND_PORT` in `.env` |
-| Frontend returns API errors | Check `docker compose ps -a` and `docker compose logs backend frontend` |
-| Migration fails | Check `docker compose logs migrate`, SQLite volume permissions, and `SQLITE_PATH` |
-| Upload fails with HTTP 413 | Check Nginx `client_max_body_size` and rebuild the frontend image after changing `nginx/default.conf` |
-| Images have the wrong URL or do not load | Verify the Nginx `Host` forwarding and inspect the media request in browser developer tools |
-| Git Bash rewrites container paths on Windows | For manual `docker run` commands using Linux paths, prefix the command with `MSYS_NO_PATHCONV=1` |
+| Docker cannot connect to its daemon | Start Docker Desktop / Docker Engine; check `docker info` |
+| Port 4200 already in use | Stop the local Angular server or change `FRONTEND_PORT` |
+| PostgreSQL fails to start | Check `docker compose logs db`, `DB_PASSWORD`, and database-volume state |
+| Migrations fail | Check `docker compose logs migrate` and the PostgreSQL healthcheck |
+| `collectstatic` reports permission denied | Verify ownership of `/app/staticfiles` in the backend image and the named-volume mount |
+| `/static/` responds with HTTP 404 | Verify the shared static-volume mount in **frontend** and the Nginx `/static/` location |
+| Frontend API errors | Check backend health and `docker compose logs backend frontend` |
+| Upload fails with HTTP 413 | Check Nginx `client_max_body_size`; rebuild frontend after changing config |
+| Media URLs do not load | Inspect Nginx Host forwarding and media requests in browser tools |
+| Git Bash changes Linux container paths | Prefix manual Docker commands with `MSYS_NO_PATHCONV=1` when necessary |
 
 ## Security and scope
 
-- The backend image runs with a non-root `appuser`; the frontend uses an unprivileged Nginx image.
-- `.dockerignore` files exclude local dependencies, development environments, secrets, and generated artifacts from image build contexts.
-- The backend has no host-published port; the frontend is bound to the local loopback interface.
-- `DEBUG=True` and Django's `runserver` are used **only for local development/testing**, not for public production hosting.
-- No new GitHub Actions workflows, image publishing, cloud deployment, or server provisioning are included in the containerization work.
-- Keep the feature branch separate from the default branch until the project is reviewed and approved.
+- Django runs under a non-root `appuser` (UID 999); Nginx uses an unprivileged runtime image.
+- Backend and PostgreSQL ports are internal; the frontend is published only on the local loopback address.
+- Nginx serves collected static assets read-only; uploaded files live in a separate persistent media volume.
+- `.dockerignore` files exclude local secrets and unnecessary development artifacts from build contexts.
+- Keep `.env` outside Git, use strong database and Django secrets, and avoid exposing local development settings publicly.
+- Gunicorn replaces Django's development server in Docker, but the stack is **not claimed to be production-hardened**.
+- No new CI/CD workflow, image publication, cloud deployment, or server provisioning is included.
+- The final PR into `main` should remain unmerged until mentor approval.
