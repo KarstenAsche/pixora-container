@@ -10,8 +10,10 @@ dist/
 build/
 .eggs/
 .env
-*.env
+*.env.*
 backend/.env
+!.env.example
+!backend/.env.example
 backend/media/*
 !backend/media/posts/
 backend/media/posts/*

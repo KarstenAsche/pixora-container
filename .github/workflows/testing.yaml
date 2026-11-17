@@ -7,13 +7,35 @@ jobs:
   test-backend:
     name: Test Backend
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: pixora
+          POSTGRES_USER: pixora
+          POSTGRES_PASSWORD: ci-test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pixora -d pixora"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       SECRET_KEY: ci-test-secret-key
       DEBUG: "False"
-      USE_SQLITE: "True"
+      DB_NAME: pixora
+      DB_USER: pixora
+      DB_PASSWORD: ci-test-password
+      DB_HOST: localhost
+      DB_PORT: "5432"
+
     steps:
       - uses: actions/checkout@v5
 

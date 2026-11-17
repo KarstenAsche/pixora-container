@@ -71,9 +71,6 @@ _use_sqlite = os.environ.get('USE_SQLITE', 'False') == 'True'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    } if _use_sqlite else {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': os.environ.get('DB_NAME', 'pixora'),
         'USER': os.environ.get('DB_USER', 'postgres'),
